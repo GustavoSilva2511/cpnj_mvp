@@ -1,0 +1,7 @@
+header {
+    display: flex;
+    justify-content: center;
+    border-radius: 10px;
+    box-shadow: rgba(0, 0, 0, 0.122) 1px 1px 15px 10px;
+    background-color: white;
+}
