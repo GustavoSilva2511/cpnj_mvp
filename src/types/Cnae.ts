@@ -1,6 +1,5 @@
 export interface Cnae {
-    nome: string, 
     codigo: number, 
-    uf: string
+    descricao: string
 }
 export type Cnaes = Cnae[]

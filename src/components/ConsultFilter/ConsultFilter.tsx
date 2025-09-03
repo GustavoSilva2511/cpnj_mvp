@@ -1,14 +1,15 @@
 import './ConsultFilter.css'
 import { useEffect, useState } from 'react'
-import { getMunicipalities, getStates } from '../../services/MunicipalityService'
 import * as z from "zod"
-import type { Municipalities } from '../../types/Municipality'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { Cnaes } from '../../types/Cnae'
+import { getCnaes } from '../../services/CnaesService'
+import React from 'react'
+import { getCredits } from '../../services/CreditsService'
+import { MunicipalityForm } from '../MunicipalityForm/MunicipalityForm'
 
 const schema = z.object({
-    state: z.string().min(1, "Estado é obrigatório"),
-    municipality: z.string().min(1, "Município é obrigatório"),
     keyWords: z.object({
         inCompanyName: z.boolean().optional(),
         inFantasyName: z.boolean().optional()
@@ -19,11 +20,16 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
-export default function ConsultFilter({ setCnpjs }) {
-    const [allStates, setAllStates] = useState<{nome: string}[]>([])
-    const [allMunicipalities, setAllMunicipalities] = useState<Municipalities>([])
-    const [credits, setCredits] = useState<number>(30)
+interface Props {
+    setCnpjs: React.Dispatch<React.SetStateAction<object>>;
+};
 
+export default function ConsultFilter({ setCnpjs }: Props) {
+    const [allCnaes, setAllCnaes] = useState<Cnaes>([])
+    const [credits, setCredits] = useState<number>(0)
+
+
+    const [municipalityFilters, setMunicipalityFilters ] = useState<{id: string, state: string, municipality: string}[]>([])
     const {
         register,
         handleSubmit,
@@ -44,35 +50,22 @@ export default function ConsultFilter({ setCnpjs }) {
         }
     })
 
-    // Observa mudanças no campo state
-    const selectedState = watch("state")
+    const removeMunicipalityFilter = (id: string) => {
+        setMunicipalityFilters(municipalityFilters.filter(m => m.id != id))
+    }
 
     // Carrega estados na inicialização
     useEffect(() => {
-        setAllStates(getStates())
+        getCnaes().then(data => setAllCnaes(data))
+        getCredits().then(data => setCredits(data))
     }, [])
 
     // Filtra municípios quando o estado muda
-    useEffect(() => {
-        if (selectedState) {
-            getMunicipalities(selectedState).then(municipalities => {
-                setAllMunicipalities(municipalities)
-            }).catch(error => {
-                console.error("Erro ao carregar municípios:", error)
-                setAllMunicipalities([])
-            })
-        } else {
-            setAllMunicipalities([])
-        }
-
-        // Limpa o município selecionado quando o estado muda
-        setValue("municipality", "")
-    }, [selectedState, setValue])
 
     const handleFilterForm = (data: FormData) => {
         console.log("Dados do formulário:", data)
         // const url = 'https://api.listacnae.com.br/v1/buscar';
-        // const bearerToken = '198EE5B2AC1-7F49DC5513A3927D-3CIH2YN9SSJVDAFWTDT1U5HNS6ZKJECI'; // Insira o token gerado.
+        // const bearerToken = '';
         // const stfy = JSON.stringify;
         // const json = {
         //     inicio: 0,
@@ -10221,117 +10214,95 @@ export default function ConsultFilter({ setCnpjs }) {
                 "disponivel":18
             }
         }
+
         setCnpjs(res)
         setCredits(res.creditos.disponivel)
 
     }
 
     return (
-        <form onSubmit={handleSubmit(handleFilterForm)} className='container border p-2'>
-            <div className='row mb-3'>
-                <div className="row col-md-6">
-                    <div className='d-flex flex-column col-sm-6 mb-3'>
-                        <label htmlFor="state">Estados</label>
-                        <select
-                            {...register("state")}
-                            className={`form-control ${errors.state ? 'is-invalid' : ''}`}
-                            id="state"
-                        >
-                            <option value="">Selecione um estado</option>
-                            {allStates.map(item => (
-                                <option key={item.nome} value={item.nome}>
-                                    {item.nome}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.state && (
-                            <div className="invalid-feedback">
-                                {errors.state.message}
-                            </div>
-                        )}
+        <div className='container bg-light rounded mt-1 mb-1 p-2 border'>
+            <div className='container bg-light rounded mt-1 p-2'>
+                <MunicipalityForm
+                    municipalityFilters={municipalityFilters}
+                    setMunicipalityFilters={setMunicipalityFilters}
+                />
+                <ul className='list-group'>
+                    {municipalityFilters.map(item => (
+                        <li
+                            key={item.id}
+                            className='list-group-item d-flex justify-content-between'>{item.municipality} ({item.state})
+                            <button
+                                onClick={() => removeMunicipalityFilter(item.id)}
+                                className='btn btn-danger btn-sm'
+                            >-</button>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            <div className='container'>
+                <div className='d-flex flex-column mb-2 p-2 border'>
+                    <div className="row col-md-12 ">
+                        <div className='d-flex flex-column col-sm-6'>
+                            <label className='label' htmlFor="key-words">Palavras chaves</label>
+                            <fieldset name='key-words' className='d-flex justify-content-around form-control align-center'>
+                                <div>
+                                    <input
+                                        {...register("keyWords.inCompanyName")}
+                                        type="checkbox"
+                                        id="in-company-name"
+                                    />
+                                    <label htmlFor="in-company-name">Na razão social</label>
+                                </div>
+                                <div>
+                                    <input
+                                        {...register("keyWords.inFantasyName")}
+                                        type="checkbox"
+                                        id="in-fantasy-name"
+                                    />
+                                    <label htmlFor="in-fantasy-name">No nome fantasia</label>
+                                </div>
+                            </fieldset>
+                        </div>
+
+                        <div className='d-flex flex-column col-sm-6'>
+                            <label htmlFor="search-term">Termos na busca</label>
+                            <input
+                                {...register("searchTerm")}
+                                type='text'
+                                className="form-control"
+                                id="search-term"
+                                placeholder="Digite os termos de busca"
+                            />
+                        </div>
                     </div>
 
-                    <div className='d-flex flex-column col-sm-6'>
-                        <label htmlFor="municipality">Municípios</label>
-                        <select
-                            {...register("municipality")}
-                            className={`form-control ${errors.municipality ? 'is-invalid' : ''}`}
-                            id="municipality"
-                            disabled={!selectedState || allMunicipalities.length === 0}
-                        >
-                            <option value="">
-                                {selectedState ? "Selecione um município" : "Primeiro selecione um estado"}
-                            </option>
-                            {allMunicipalities.map(item => (
-                                <option key={item.codigo} value={item.codigo}>
-                                    {item.nome}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.municipality && (
-                            <div className="invalid-feedback">
-                                {errors.municipality.message}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className='d-flex flex-column col-sm-6'>
-                        <label className='label' htmlFor="key-words">Palavras chaves</label>
-                        <fieldset name='key-words' className='d-flex flex-column form-control'>
-                            <div>
-                                <input
-                                    {...register("keyWords.inCompanyName")}
-                                    type="checkbox"
-                                    id="in-company-name"
-                                />
-                                <label htmlFor="in-company-name">Na razão social</label>
-                            </div>
-                            <div>
-                                <input
-                                    {...register("keyWords.inFantasyName")}
-                                    type="checkbox"
-                                    id="in-fantasy-name"
-                                />
-                                <label htmlFor="in-fantasy-name">No nome fantasia</label>
-                            </div>
-                        </fieldset>
-                    </div>
-
-                    <div className='d-flex flex-column col-sm-6'>
-                        <label htmlFor="search-term">Termos na busca</label>
-                        <input
-                            {...register("searchTerm")}
-                            type='text'
-                            className="form-control"
-                            id="search-term"
-                            placeholder="Digite os termos de busca"
-                        />
-                    </div>
+                    {/* <div className="col-md-6">
+                        <div className='d-flex flex-column'>
+                            <label htmlFor="cnaes">CNAEs</label>
+                            <select
+                                {...register("cnaes")}
+                                className='form-control'
+                                id="cnaes"
+                                size={15}
+                                multiple
+                            >
+                                {allCnaes?.map(item => (
+                                    <option key={item.codigo} value={item.codigo}>{item.descricao}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div> */}
                 </div>
 
-                <div className="col-md-6">
-                    <div className='d-flex flex-column'>
-                        <label htmlFor="cnaes">CNAEs</label>
-                        <select
-                            {...register("cnaes")}
-                            className='form-control'
-                            id="cnaes"
-                            size={4}
-                            multiple
-                        >
-                            <option value={4672900}>teste</option>
-                            <option value={4744001}>teste1</option>
-                            <option value={1099603}>teste2</option>
-                            <option value={4912402}>teste3</option>
-                        </select>
-                    </div>
+                <div className='row d-flex justify-content-center'>
+                    <button
+                        className='btn btn-primary'
+                        onClick={handleSubmit(handleFilterForm)}
+                    >Filtrar</button>
+                    <p className='text-center'>{credits} créditos disponíveis</p>
                 </div>
             </div>
-
-            <div className='row d-flex justify-content-center'>
-                <button className='btn btn-primary' type='submit'>Filtrar</button>
-                <p className='text-center'>{credits} créditos disponíveis</p>
-            </div>
-        </form>
+        </div>
     )
 }
