@@ -3,7 +3,7 @@ import type { States } from "../types/State"
 
 export const getMunicipalities = async (state?: string): Promise<Municipalities> => {
     const url = 'https://api.listacnae.com.br/v1/todosMunicipios';
-    const bearerToken: string | undefined = '198EE5B2AC1-7F49DC5513A3927D-3CIH2YN9SSJVDAFWTDT1U5HNS6ZKJECI';
+    const bearerToken: string | undefined = import.meta.env.VITE_TOKEN_API;
     const q = {
         method: "GET",
         headers: { "Authorization": `Bearer ${bearerToken}`}

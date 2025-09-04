@@ -1,5 +1,5 @@
 import './ConsultFilter.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import * as z from "zod"
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,6 +13,7 @@ import type { BuscarResponse } from '../../types/BuscarResponse'
 
 
 const schema = z.object({
+    states: z.array(z.string()).optional(),
     municipalities: z.array(z.string()).optional(),
     keyWords: z.object({
         inCompanyName: z.boolean().optional(),
@@ -43,6 +44,7 @@ export default function ConsultFilter({ setCnpjs }: Props) {
     } = useForm<FormData>({
         resolver: zodResolver(schema),
         defaultValues: {
+            states: [],
             municipalities: [],
             keyWords: {
                 inCompanyName: false,
@@ -78,6 +80,7 @@ export default function ConsultFilter({ setCnpjs }: Props) {
     }, [selectedCnaes, setValue])
 
     useEffect(() => {
+        setValue("states", municipalityFilters.map(m => m.state))
         setValue("municipalities", municipalityFilters.map(m => m.code))
     }, [municipalityFilters, setValue])
 
@@ -85,119 +88,145 @@ export default function ConsultFilter({ setCnpjs }: Props) {
 
     const handleFilterForm = (data: FormData) => {
         console.log("Dados do formulário:", data)
-        // const url = 'https://api.listacnae.com.br/v1/buscar';
-        // const bearerToken = '';
-        // const stfy = JSON.stringify;
-        // const json = {
-        //     inicio: 0,
-        //     quantidade: 2,
-        //     email_obrigatorio: false,
-        //     simples_nacional: false,
-        //     termos_de_busca: stfy([]),
-        //     somente_matrizes: true,
-        //     data_inicio: "01/01/2000",
-        //     data_fim: "01/01/2025",
-        //     estados: stfy([data.state]),
-        //     incluir_cnaes_secundarios: false,
-        //     cnaes: stfy(data.cnaes?.map((e) => parseInt(e))),
-        //     municipios: stfy([data.municipality].map((e) => parseInt(e)))
-        // };
-        // let q = { method: "GET", headers: { "Authorization": `Bearer ${bearerToken}`}};
-        // let u = `${url}?${new URLSearchParams(json).toString()}`;
-        // fetch(u,q).then(r => r.json()).then(dados => {
-        //     console.log(dados);
-        //     setCredits(dados.creditos.disponivel)
-        // }).catch(erro => {
-        //     console.log(erro);
-        // })
-        const res: BuscarResponse = {
-            "mensagem":"Sucesso ao capturar dados solicitados.",
-            "inicio":0,
-            "quantidade_solicitada":2,
-            "quantidade_encontrada":199,
-            "quantidade_retornada":2,
-            "identificador_busca":"5MUHVK6PGSEOS8E0TE760WNJRC6ELANM",
-            "dados":[
-                {
-                    "cnpj":"24899258000130",
-                    "tipo":"MATRIZ",
-                    "tipo_codigo":1,
-                    "natureza_juridica_codigo":2135,
-                    "natureza_juridica_descricao":"Empresário (Individual)",
-                    "razao_social":"ELISEU MAGNO ALMEIDA ARAUJO DIAS 71481010344",
-                    "nome_fantasia":null,
-                    "situacao":"ATIVA",
-                    "situacao_codigo":2,
-                    "situacao_data_evento":{
-                        "formato_unix":1464663600000,
-                        "formato_date": "2016-05-31T03:00:00.000Z"
-                    },
-                    "situacao_motivo_codigo":0,
-                    "situacao_motivo_descricao":"SEM MOTIVO",
-                    "inicio_atividade":{
-                        "formato_unix":1464663600000,
-                        "formato_date":"2016-05-31T03:00:00.000Z"
-                    },
-                    "cnae_primario":4744001,
-                    "cnaes_secundarios":[
-                        4732600,
-                        4742300,
-                        4541206,
-                        4744099
-                    ],
-                    "endereco":{
-                        "tipo":"AVENIDA",
-                        "logradouro":"ACRE",
-                        "numero":"48",
-                        "complemento":null,
-                        "bairro":"CHACARA BRASIL",
-                        "cep":"65066841",
-                        "uf":"MA",
-                        "municipio_codigo":921,
-                        "municipio":"SAO LUIS"
-                    },
-                    "telefone_ddd_1":"98",
-                    "telefone_numero_1":"31997673",
-                    "telefone_ddd_2":null,
-                    "telefone_numero_2":null,
-                    "email":"maranhaoparafusos@gmail.com",
-                    "telefones_repetidos":2,
-                    "emails_repetidos":1,
-                    "qualificacao_responsavel":50,
-                    "capital_social":"5000,00",
-                    "porte_codigo":1,
-                    "porte":"MICRO EMPRESA",
-                    "simples":false,
-                    "simples_data_insercao":{
-                        "formato_unix":1464663600000,
-                        "formato_date":"2016-05-31T03:00:00.000Z"
-                    },
-                    "simples_data_exclusao":{
-                        "formato_unix":1703991600000,
-                        "formato_date":"2023-12-31T03:00:00.000Z"
-                    },
-                    "mei":false,
-                    "mei_data_insercao":{
-                        "formato_unix":1464663600000,
-                        "formato_date":"2016-05-31T03:00:00.000Z"
-                    },
-                    "mei_data_exclusao":{
-                        "formato_unix":1703991600000,
-                        "formato_date":"2023-12-31T03:00:00.000Z"
-                    },
-                    "situacao_especial":null,
-                    "situacao_especial_data":null
-                },
-            ],
-            "creditos":{
-                "disponivel":18
-            }
+        const url = 'https://api.listacnae.com.br/v1/buscar';
+        const bearerToken = import.meta.env.VITE_TOKEN_API
+        const stfy = JSON.stringify;
+        const terms = []
+        if (data.keyWords?.inCompanyName) {
+            terms.push({tipo: 'R', termo: data.searchTerm})
         }
+        if (data.keyWords?.inFantasyName) {
+            terms.push({tipo: 'F', termo: data.searchTerm})
+        }
+        const json = {
+            inicio: "0",
+            quantidade: "5",
+            email_obrigatorio: "false",
+            simples_nacional: "false",
+            termos_de_busca: stfy(terms),
+            somente_matrizes: "true",
+            data_inicio: "01/01/2000",
+            data_fim: "01/01/2025",
+            estados: stfy(data.states?.map((e) => e)),
+            incluir_cnaes_secundarios: "false",
+            cnaes: stfy(data.cnaes?.map((e) => parseInt(e))),
+            municipios: stfy(data.municipalities?.map((e) => parseInt(e)))
+        };
 
-        setCnpjs(res)
-        setCredits(res.creditos.disponivel)
+        const q = {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${bearerToken}`
+            }
+        };
+        const u = `${url}?${new URLSearchParams(json).toString()}`;
+        fetch(u,q).then(r => r.json()).then(dados => {
+            const res: BuscarResponse = dados
+            setCnpjs(res)
+            setCredits(res.creditos.disponivel)
+        }).catch(erro => {
+            console.log(erro);
+        })
+        // const res: BuscarResponse = {
+        //     "mensagem":"Sucesso ao capturar dados solicitados.",
+        //     "inicio":0,
+        //     "quantidade_solicitada":2,
+        //     "quantidade_encontrada":199,
+        //     "quantidade_retornada":2,
+        //     "identificador_busca":"5MUHVK6PGSEOS8E0TE760WNJRC6ELANM",
+        //     "dados":[
+        //         {
+        //             "cnpj":"24899258000130",
+        //             "tipo":"MATRIZ",
+        //             "tipo_codigo":1,
+        //             "natureza_juridica_codigo":2135,
+        //             "natureza_juridica_descricao":"Empresário (Individual)",
+        //             "razao_social":"ELISEU MAGNO ALMEIDA ARAUJO DIAS 71481010344",
+        //             "nome_fantasia":null,
+        //             "situacao":"ATIVA",
+        //             "situacao_codigo":2,
+        //             "situacao_data_evento":{
+        //                 "formato_unix":1464663600000,
+        //                 "formato_date": "2016-05-31T03:00:00.000Z"
+        //             },
+        //             "situacao_motivo_codigo":0,
+        //             "situacao_motivo_descricao":"SEM MOTIVO",
+        //             "inicio_atividade":{
+        //                 "formato_unix":1464663600000,
+        //                 "formato_date":"2016-05-31T03:00:00.000Z"
+        //             },
+        //             "cnae_primario":4744001,
+        //             "cnaes_secundarios":[
+        //                 4732600,
+        //                 4742300,
+        //                 4541206,
+        //                 4744099
+        //             ],
+        //             "endereco":{
+        //                 "tipo":"AVENIDA",
+        //                 "logradouro":"ACRE",
+        //                 "numero":"48",
+        //                 "complemento":null,
+        //                 "bairro":"CHACARA BRASIL",
+        //                 "cep":"65066841",
+        //                 "uf":"MA",
+        //                 "municipio_codigo":921,
+        //                 "municipio":"SAO LUIS"
+        //             },
+        //             "telefone_ddd_1":"98",
+        //             "telefone_numero_1":"31997673",
+        //             "telefone_ddd_2":null,
+        //             "telefone_numero_2":null,
+        //             "email":"maranhaoparafusos@gmail.com",
+        //             "telefones_repetidos":2,
+        //             "emails_repetidos":1,
+        //             "qualificacao_responsavel":50,
+        //             "capital_social":"5000,00",
+        //             "porte_codigo":1,
+        //             "porte":"MICRO EMPRESA",
+        //             "simples":false,
+        //             "simples_data_insercao":{
+        //                 "formato_unix":1464663600000,
+        //                 "formato_date":"2016-05-31T03:00:00.000Z"
+        //             },
+        //             "simples_data_exclusao":{
+        //                 "formato_unix":1703991600000,
+        //                 "formato_date":"2023-12-31T03:00:00.000Z"
+        //             },
+        //             "mei":false,
+        //             "mei_data_insercao":{
+        //                 "formato_unix":1464663600000,
+        //                 "formato_date":"2016-05-31T03:00:00.000Z"
+        //             },
+        //             "mei_data_exclusao":{
+        //                 "formato_unix":1703991600000,
+        //                 "formato_date":"2023-12-31T03:00:00.000Z"
+        //             },
+        //             "situacao_especial":null,
+        //             "situacao_especial_data":null
+        //         },
+        //     ],
+        //     "creditos":{
+        //         "disponivel":18
+        //     }
+        // }
+        // setCnpjs(res)
+        // setCredits(res.creditos.disponivel)
 
     }
+
+    const [filterText, setFilterText] = useState('');
+
+    // Filtrar os CNAEs baseado no texto digitado
+    const filteredCnaes = useMemo(() => {
+        if (!filterText.trim()) {
+            return allCnaes;
+        }
+        return allCnaes?.filter(item =>
+            item.descricao.toLowerCase().includes(filterText.toLowerCase()) ||
+            String(item.codigo).includes(filterText)
+        );
+    }, [allCnaes, filterText]);
 
     return (
         <div className='container bg-light rounded mt-1 mb-1 p-2 border'>
@@ -213,7 +242,7 @@ export default function ConsultFilter({ setCnpjs }: Props) {
                             className='list-group-item d-flex justify-content-between'>{item.description} ({item.state})
                             <button
                                 onClick={() => removeMunicipalityFilter(item.id)}
-                                className='btn btn-danger btn-sm'
+                                className='btn btn-danger'
                             >-</button>
                         </li>
                     ))}
@@ -221,11 +250,11 @@ export default function ConsultFilter({ setCnpjs }: Props) {
             </div>
             <div className='container'>
                 <div className='d-flex flex-column mb-2 p-2 border'>
-                    <div className="row col-md-12 ">
-                        <div className='d-flex flex-column col-sm-6'>
+                    <div className="row col-sm-12 ">
+                        <div className='d-flex flex-column col-sm-12 col-md-6'>
                             <label className='label' htmlFor="key-words">Palavras chaves</label>
-                            <fieldset name='key-words' className='d-flex justify-content-around form-control align-center'>
-                                <div className='in-company-name'>
+                            <fieldset name='key-words' className='d-sm-flex flex-sm-column s-md-flex flex-md-row justify-content-around form-control align-center'>
+                                <div className='d-flex in-company-name align-center'>
                                     <input
                                         {...register("keyWords.inCompanyName")}
                                         type="checkbox"
@@ -233,7 +262,7 @@ export default function ConsultFilter({ setCnpjs }: Props) {
                                     />
                                     <label htmlFor="in-company-name">Na razão social</label>
                                 </div>
-                                <div className='in-fantasy-name'>
+                                <div className='d-flex in-fantasy-name align-center'>
                                     <input
                                         {...register("keyWords.inFantasyName")}
                                         type="checkbox"
@@ -244,7 +273,7 @@ export default function ConsultFilter({ setCnpjs }: Props) {
                             </fieldset>
                         </div>
 
-                        <div className='d-flex flex-column col-sm-6'>
+                        <div className='d-flex flex-column col-sm-12 col-md-6'>
                             <label htmlFor="search-term">Termos na busca</label>
                             <input
                                 {...register("searchTerm")}
@@ -260,21 +289,42 @@ export default function ConsultFilter({ setCnpjs }: Props) {
                     <div className="col-sm-12 h-50">
                         <div className='d-flex flex-column m-1'>
                             <label htmlFor="cnaes">CNAEs</label>
+                            <div className="mb-2">
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Filtrar CNAEs por descrição ou código..."
+                                    value={filterText}
+                                    onChange={(e) => setFilterText(e.target.value)}
+                                />
+                            </div>
                             <div
                                 className='list-group cnaes-list'
                                 id="cnaes"
+                                style={{ maxHeight: '300px', overflowY: 'auto' }}
                             >
-                                {allCnaes?.map(item => (
+                                {filteredCnaes?.map(item => (
                                     <label key={item.codigo} className="d-flex list-group-item">
                                         <input
                                             type="checkbox"
+                                            className="me-2"
                                             checked={selectedCnaes.includes(String(item.codigo))}
                                             onChange={() => handleCheckboxChange(String(item.codigo))}
                                         />
-                                        <span>{item.descricao}</span>
+                                        <span>
+                                            <strong>{item.codigo}</strong> - {item.descricao}
+                                        </span>
                                     </label>
                                 ))}
+                                {filteredCnaes?.length === 0 && (
+                                    <div className="list-group-item text-muted text-center">
+                                        Nenhum CNAE encontrado para o filtro "{filterText}"
+                                    </div>
+                                )}
                             </div>
+                            <small className="text-muted mt-1">
+                                Mostrando {filteredCnaes?.length || 0} de {allCnaes?.length || 0} CNAEs
+                            </small>
                         </div>
                     </div>
                 </div>

@@ -78,8 +78,8 @@ export function MunicipalityForm({ municipalityFilters, setMunicipalityFilters }
     return (
         <div className="d-flex flex-column mb-2 p-2 border">
             <div className="row d-flex align-center">
-                <div className="col-sm-10 row">
-                    <div className='col-sm-6 mb-3'>
+                <div className="col-sm-12 row">
+                    <div className='col-sm-12 col-md-5 mb-3'>
                         <label htmlFor="state">Estados</label>
                         <select
                             {...register("state")}
@@ -100,7 +100,7 @@ export function MunicipalityForm({ municipalityFilters, setMunicipalityFilters }
                         )}
                     </div>
 
-                    <div className='col-sm-6'>
+                    <div className='col-sm-12 col-md-5 mb-3'>
                         <label htmlFor="municipality">Municípios</label>
                         <select
                             {...register("municipality")}
@@ -123,9 +123,9 @@ export function MunicipalityForm({ municipalityFilters, setMunicipalityFilters }
                             </div>
                         )}
                     </div>
-                </div>
-                <div className="col-sm-2">
-                    <button onClick={handleSubmit(handleFilterForm)} className="btn btn-primary btn-sm col-sm-2">+</button>
+                    <div className="d-flex justify-content-center col-sm-12 col-md-2">
+                        <button onClick={handleSubmit(handleFilterForm)} className="btn btn-primary m-3">+</button>
+                    </div>
                 </div>
             </div>
         </div>

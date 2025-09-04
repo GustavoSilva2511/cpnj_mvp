@@ -28,10 +28,12 @@ export default function ShowData({ cnpjs }: Props) {
             alert('Nenhum dado para exportar!');
             return;
         }
-        console.log(cnpjs)
         const processedData = cnpjs.dados.map((item: Dado) => ({
+            "Situação": item.situacao,
             "Cnpj": item.cnpj,
             "Razão Social": item.razao_social,
+            "Telefene": `(${item.telefone_ddd_1}) 9${item.telefone_numero_1}`,
+            "Email": item.email,
             "Enderço completo": `${item.endereco?.tipo}, ${item.endereco?.logradouro}, ${item.endereco?.numero}, ${item.endereco?.complemento}, ${item.endereco?.bairro}, ${item.endereco?.municipio}, ${item.endereco.uf}, ${item.endereco.cep}`,
             "Membros": item.membros ? item.membros?.map(membro => `${membro.nome}, ${membro.qualificacao_descricao}`).join(' | '): ""
         }))
@@ -51,25 +53,33 @@ export default function ShowData({ cnpjs }: Props) {
             <div className='container bg-light rounded mb-2 p-2 border'>
                 <div className='w-100 d-flex justify-content-end m-2'>
                     <button
-                        className='btn btn-primary m-2 btn-sm'
+                        className='btn btn-primary m-2'
                         onClick={exportToExcel}
-                    >exportar
+                    >Exportar
                     </button>
                 </div>
                 <table className='table table-sm table-hover table-striped table-bordered'>
                     <thead>
                         <tr>
                         <th scope='col'>N°</th>
+                        <th scope='col'>Situação</th>
                         <th scope='col'>Cnpj</th>
+                        <th scope='col'>Telefone</th>
+                        <th scope='col'>Email</th>
                         <th scope='col'>Razao social</th>
+                        <th scope='col'>Membros cadastrados</th>
                         </tr>
                     </thead>
                     <tbody>
                         {cnpjs.dados?.slice((pagination*paginationSize), (pagination*paginationSize)+paginationSize).map((item: Dado, index: number, ) => (
                         <tr key={index}>
                             <th scope='row'>{index+(pagination*paginationSize)+1}</th>
+                            <td>{item.situacao}</td>
                             <td>{item.cnpj}</td>
+                            <td>({item.telefone_ddd_1}) 9{item.telefone_numero_1}</td>
+                            <td>{item.email}</td>
                             <td>{item.razao_social}</td>
+                            <td>{item?.membros ? item.membros?.length : 0}</td>
                         </tr>
                         ))}
                     </tbody>

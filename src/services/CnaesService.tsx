@@ -2,7 +2,7 @@ import type { Cnaes } from "../types/Cnae";
 
 export const getCnaes = async (): Promise<Cnaes> => {
     const url = 'https://api.listacnae.com.br/v1/todosCnaes';
-    const bearerToken: string | undefined = '198EE5B2AC1-7F49DC5513A3927D-3CIH2YN9SSJVDAFWTDT1U5HNS6ZKJECI';
+    const bearerToken: string | undefined = import.meta.env.VITE_TOKEN_API;
 
     const q = {
         method: "GET",
