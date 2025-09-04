@@ -8,3 +8,13 @@ form {
     padding: 10px;
     background-color: white;
 }
+
+.align-center {
+    align-items: center;
+    justify-content: center;
+}
+
+.cnaes-list {
+    height: 30dvh;
+    overflow-y: scroll;
+}

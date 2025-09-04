@@ -1,21 +1,26 @@
 import './MunicipalityFilter.css'
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import type{ States } from "../../types/State"
 import type { Municipalities } from "../../types/Municipality"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { getMunicipalities, getStates } from "../../services/MunicipalityService"
+import type { MunicipalityFilters } from '../../types/MunicipalityFilters';
 
 const schema = z.object({
     state: z.string().min(1, "Estado é obrigatório"),
-    municipality: z.string().min(1, "Município é obrigatório"),
+    municipality: z.string().min(1, "Municipio é obrigatório")
 })
 
 type FormData = z.infer<typeof schema>
 
+type Props = {
+    municipalityFilters: MunicipalityFilters,
+    setMunicipalityFilters: React.Dispatch<React.SetStateAction<MunicipalityFilters>>
+}
 
-export function MunicipalityForm({ municipalityFilters, setMunicipalityFilters }) {
+export function MunicipalityForm({ municipalityFilters, setMunicipalityFilters }: Props) {
     const {
         register,
         handleSubmit,
@@ -26,7 +31,7 @@ export function MunicipalityForm({ municipalityFilters, setMunicipalityFilters }
         resolver: zodResolver(schema),
         defaultValues: {
             state: "",
-            municipality: "",
+            municipality: ""
         }
     })
 
@@ -36,9 +41,20 @@ export function MunicipalityForm({ municipalityFilters, setMunicipalityFilters }
     const [allMunicipalities, setAllMunicipalities] = useState<Municipalities>([])
 
     const handleFilterForm = (data: FormData) => {
-        const filter = {id: Date.now(), state: data.state, municipality: data.municipality}
+        let description = ""
+        allMunicipalities.map(item => {
+            if (String(item.codigo) == data.municipality) {
+                description = item.nome
+            }
+        })
+        const filter = {
+            id: String(Date.now()),
+            state: data.state,
+            description: description,
+            code: data.municipality,
+        }
         setMunicipalityFilters([...municipalityFilters, filter])
-        setValue('municipality', "")
+        setValue('municipality', '')
         setValue('state', "")
     }
 
@@ -53,7 +69,7 @@ export function MunicipalityForm({ municipalityFilters, setMunicipalityFilters }
         } else {
             setAllMunicipalities([])
         }
-        setValue("municipality", "")
+        setValue('municipality', '')
     }, [selectedState, setValue])
 
     useEffect(()=> {
@@ -96,7 +112,7 @@ export function MunicipalityForm({ municipalityFilters, setMunicipalityFilters }
                                 {selectedState ? "Selecione um município" : "Primeiro selecione um estado"}
                             </option>
                             {allMunicipalities.map(item => (
-                                <option key={item.codigo} value={item.codigo}>
+                                <option key={item.codigo} value={String(item.codigo)}>
                                     {item.nome}
                                 </option>
                             ))}

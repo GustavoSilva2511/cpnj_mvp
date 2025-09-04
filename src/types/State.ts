@@ -2,4 +2,4 @@ export interface State {
     nome: string
 }
 
-export type States = State[]
+export type States = Array<State>

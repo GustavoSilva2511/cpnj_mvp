@@ -1,11 +1,12 @@
-import type React from 'react'
 import './Header.css'
-
-export default function Header(props: any) {
+type Props = {
+    title: string
+}
+export default function Header({ title }: Props) {
     return (
         <>
             <header>
-                <h2>{props.title}</h2>
+                <h2>{title}</h2>
             </header>
         </>
     )

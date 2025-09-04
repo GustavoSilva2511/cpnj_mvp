@@ -1,5 +1,5 @@
 export interface Cnae {
-    codigo: number, 
+    codigo: number,
     descricao: string
 }
-export type Cnaes = Cnae[]
+export type Cnaes = Array<Cnae>

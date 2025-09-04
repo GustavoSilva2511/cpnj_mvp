@@ -1,6 +1,6 @@
 export interface Municipality {
-    nome: string, 
-    codigo: number, 
+    nome: string,
+    codigo: number,
     uf: string
 }
-export type Municipalities = Municipality[]
+export type Municipalities = Array<Municipality>
