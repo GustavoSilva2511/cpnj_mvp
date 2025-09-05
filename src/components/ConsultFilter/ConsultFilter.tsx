@@ -90,6 +90,7 @@ export default function ConsultFilter({ setCnpjs }: Props) {
         console.log("Dados do formulário:", data)
         const url = 'https://api.listacnae.com.br/v1/buscar';
         const bearerToken = import.meta.env.VITE_TOKEN_API
+        const limit = import.meta.env.VITE_LIMIT_API
         const stfy = JSON.stringify;
         const terms = []
         if (data.keyWords?.inCompanyName) {
@@ -100,7 +101,7 @@ export default function ConsultFilter({ setCnpjs }: Props) {
         }
         const json = {
             inicio: "0",
-            quantidade: "5",
+            quantidade: limit,
             email_obrigatorio: "false",
             simples_nacional: "false",
             termos_de_busca: stfy(terms),
