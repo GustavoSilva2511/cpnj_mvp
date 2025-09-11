@@ -36,6 +36,7 @@ export default function ConsultFilter({ setCnpjs }: Props) {
     const [municipalityFilters, setMunicipalityFilters ] = useState<MunicipalityFilters>([])
     const [selectedCnaes, setSelectedCenaes] = useState<Array<string>>([])
 
+    const [apiLimitSize, setApiLimitSize] = useState<string>("")
 
     const {
         register,
@@ -90,7 +91,6 @@ export default function ConsultFilter({ setCnpjs }: Props) {
         console.log("Dados do formulário:", data)
         const url = 'https://api.listacnae.com.br/v1/buscar';
         const bearerToken = import.meta.env.VITE_TOKEN_API
-        const limit = import.meta.env.VITE_LIMIT_API
         const stfy = JSON.stringify;
         const terms = []
         if (data.keyWords?.inCompanyName) {
@@ -101,7 +101,7 @@ export default function ConsultFilter({ setCnpjs }: Props) {
         }
         const json = {
             inicio: "0",
-            quantidade: limit,
+            quantidade: apiLimitSize,
             email_obrigatorio: "false",
             simples_nacional: "false",
             termos_de_busca: stfy(terms),
@@ -286,6 +286,21 @@ export default function ConsultFilter({ setCnpjs }: Props) {
                         </div>
                     </div>
                 </div>
+
+                <div className="d-flex flex-column mb-2 p-2 border">
+                    <label htmlFor="limit">Limite por requisição: <input className='form-control' type="number" onChange={(e) => setApiLimitSize(e.target.value)} value={apiLimitSize}/></label>
+                    <input
+                        className='form-range'
+                        type="range"
+                        min="1"
+                        max="1000"
+                        value={apiLimitSize}
+                        id="limit-size"
+                        name="limit-size"
+                        onChange={(e) => setApiLimitSize(e.target.value)}
+                    />
+                </div>
+
                 <div className='d-flex mb-2 p-2 border'>
                     <div className="col-sm-12 h-50">
                         <div className='d-flex flex-column m-1'>
