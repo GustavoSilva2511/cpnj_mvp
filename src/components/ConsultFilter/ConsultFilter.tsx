@@ -36,7 +36,7 @@ export default function ConsultFilter({ setCnpjs }: Props) {
     const [municipalityFilters, setMunicipalityFilters ] = useState<MunicipalityFilters>([])
     const [selectedCnaes, setSelectedCenaes] = useState<Array<string>>([])
 
-    const [apiLimitSize, setApiLimitSize] = useState<string>("")
+    const [apiLimitSize, setApiLimitSize] = useState<string>("500")
 
     const {
         register,
